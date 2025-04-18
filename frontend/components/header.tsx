@@ -1,0 +1,207 @@
+"use client"
+
+import Link from "next/link"
+import { useState } from "react"
+import { ShoppingCart, User, Search, Menu, X, Heart, LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
+import { usePathname } from "next/navigation"
+import { useAuth } from "@/components/auth-provider"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
+export default function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
+  const { user, logout } = useAuth()
+
+  const isActive = (path: string) => pathname === path
+
+  const navItems = [
+    { name: "Trang chủ", path: "/" },
+    { name: "Sản phẩm", path: "/products" },
+    { name: "Khuyến mãi", path: "/promotions" },
+    { name: "Về chúng tôi", path: "/about" },
+    { name: "Liên hệ", path: "/contact" },
+  ]
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center">
+            <span className="text-xl font-bold text-pink-600">Thanh Tâm</span>
+          </Link>
+
+          <nav className="hidden md:flex gap-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-pink-600",
+                  isActive(item.path) ? "text-pink-600" : "text-foreground",
+                )}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="hidden md:flex items-center gap-4">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Tìm kiếm sản phẩm..." className="pl-8 w-full" />
+          </div>
+
+          <Link href="/account/wishlist">
+            <Button variant="ghost" size="icon" className="relative">
+              <Heart className="h-5 w-5" />
+              {user && user.wishlist.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-600 text-[10px] text-white">
+                  {user.wishlist.length}
+                </span>
+              )}
+            </Button>
+          </Link>
+
+          <Link href="/cart">
+            <Button variant="ghost" size="icon" className="relative">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-600 text-[10px] text-white">
+                0
+              </span>
+            </Button>
+          </Link>
+
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt={user.fullName} />
+                    <AvatarFallback>{user.fullName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{user.fullName}</p>
+                    <p className="w-[200px] truncate text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="cursor-pointer">
+                    Tài khoản của tôi
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account/orders" className="cursor-pointer">
+                    Đơn hàng của tôi
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account/wishlist" className="cursor-pointer">
+                    Sản phẩm yêu thích
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="cursor-pointer text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/auth/login">
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+        </div>
+
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+      </div>
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="md:hidden p-4 border-t">
+          <div className="flex items-center mb-4">
+            <div className="relative w-full">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Tìm kiếm sản phẩm..." className="pl-8 w-full" />
+            </div>
+          </div>
+
+          <nav className="flex flex-col space-y-3">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-pink-600 p-2",
+                  isActive(item.path) ? "text-pink-600 bg-pink-50" : "text-foreground",
+                )}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.name}
+              </Link>
+            ))}
+
+            <div className="flex gap-2 pt-2 border-t">
+              <Link href="/cart" className="flex-1">
+                <Button variant="outline" className="w-full">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Giỏ hàng
+                </Button>
+              </Link>
+
+              {user ? (
+                <Link href="/account" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    <User className="h-4 w-4 mr-2" />
+                    Tài khoản
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/auth/login" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    <User className="h-4 w-4 mr-2" />
+                    Đăng nhập
+                  </Button>
+                </Link>
+              )}
+            </div>
+
+            {user && (
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
+                onClick={() => {
+                  logout()
+                  setIsMenuOpen(false)
+                }}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Đăng xuất
+              </Button>
+            )}
+          </nav>
+        </div>
+      )}
+    </header>
+  )
+}
