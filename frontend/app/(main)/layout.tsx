@@ -1,17 +1,30 @@
-import type React from "react";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+"use client"
 
-export default function MainLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+import type React from "react"
+
+import { useEffect } from "react"
+import Header from "@/components/header"
+import Footer from "@/components/footer"
+import ChatbotButton from "@/components/chatbot-button"
+import { AuthProvider } from "@/components/auth-provider"
+import RouteGuard from "@/components/route-guard"
+
+export default function MainLayout({ children }: { children: React.ReactNode }) {
+  // Cuộn lên đầu trang khi chuyển trang
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
-  );
+    <AuthProvider>
+      <RouteGuard>
+        <div className="flex min-h-screen flex-col">
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <ChatbotButton />
+        </div>
+      </RouteGuard>
+    </AuthProvider>
+  )
 }

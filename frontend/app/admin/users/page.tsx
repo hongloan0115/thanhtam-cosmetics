@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import type React from "react";
+import type React from "react"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -14,26 +14,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
+} from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
 import {
   Search,
   Edit,
@@ -52,33 +39,33 @@ import {
   UserCog,
   Grid,
   List,
-} from "lucide-react";
+} from "lucide-react"
 
 // Define user type
 interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  role: string;
-  status: string;
-  avatar?: string;
-  lastLogin?: string;
-  createdAt: string;
-  orders?: number;
-  totalSpent?: number;
+  id: number
+  name: string
+  email: string
+  phone?: string
+  role: string
+  status: string
+  avatar?: string
+  lastLogin?: string
+  createdAt: string
+  orders?: number
+  totalSpent?: number
 }
 
 // Define form type
 interface UserForm {
-  id?: number;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  status: string;
-  password?: string;
-  confirmPassword?: string;
+  id?: number
+  name: string
+  email: string
+  phone: string
+  role: string
+  status: string
+  password?: string
+  confirmPassword?: string
 }
 
 export default function AdminUsers() {
@@ -188,24 +175,24 @@ export default function AdminUsers() {
       orders: 0,
       totalSpent: 0,
     },
-  ]);
+  ])
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<number | null>(null);
-  const [addUserOpen, setAddUserOpen] = useState(false);
-  const [editUserOpen, setEditUserOpen] = useState(false);
-  const [viewUserOpen, setViewUserOpen] = useState(false);
-  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
-  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<number | null>(null)
+  const [addUserOpen, setAddUserOpen] = useState(false)
+  const [editUserOpen, setEditUserOpen] = useState(false)
+  const [viewUserOpen, setViewUserOpen] = useState(false)
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("name")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([])
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
 
   const [userForm, setUserForm] = useState<UserForm>({
     name: "",
@@ -215,7 +202,7 @@ export default function AdminUsers() {
     status: "Hoạt động",
     password: "",
     confirmPassword: "",
-  });
+  })
 
   // Filter and sort users
   const filteredUsers = users
@@ -223,49 +210,42 @@ export default function AdminUsers() {
       const matchesSearch =
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (user.phone && user.phone.includes(searchTerm));
-      const matchesRole = roleFilter === "all" || user.role === roleFilter;
-      const matchesStatus =
-        statusFilter === "all" || user.status === statusFilter;
+        (user.phone && user.phone.includes(searchTerm))
+      const matchesRole = roleFilter === "all" || user.role === roleFilter
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter
 
-      return matchesSearch && matchesRole && matchesStatus;
+      return matchesSearch && matchesRole && matchesStatus
     })
     .sort((a, b) => {
       if (sortBy === "name") {
-        return sortOrder === "asc"
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
+        return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
       } else if (sortBy === "createdAt") {
         // Simple date comparison for demo purposes
-        return sortOrder === "asc"
-          ? a.createdAt.localeCompare(b.createdAt)
-          : b.createdAt.localeCompare(a.createdAt);
+        return sortOrder === "asc" ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt)
       } else if (sortBy === "orders") {
-        return sortOrder === "asc"
-          ? (a.orders || 0) - (b.orders || 0)
-          : (b.orders || 0) - (a.orders || 0);
+        return sortOrder === "asc" ? (a.orders || 0) - (b.orders || 0) : (b.orders || 0) - (a.orders || 0)
       }
-      return 0;
-    });
+      return 0
+    })
 
   const handleDeleteClick = (userId: number) => {
-    setUserToDelete(userId);
-    setDeleteDialogOpen(true);
-  };
+    setUserToDelete(userId)
+    setDeleteDialogOpen(true)
+  }
 
   const confirmDelete = () => {
     if (userToDelete !== null) {
-      setUsers(users.filter((user) => user.id !== userToDelete));
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
+      setUsers(users.filter((user) => user.id !== userToDelete))
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
     }
-  };
+  }
 
   const handleBulkDelete = () => {
-    setUsers(users.filter((user) => !selectedUsers.includes(user.id)));
-    setSelectedUsers([]);
-    setBulkDeleteDialogOpen(false);
-  };
+    setUsers(users.filter((user) => !selectedUsers.includes(user.id)))
+    setSelectedUsers([])
+    setBulkDeleteDialogOpen(false)
+  }
 
   const handleAddUser = () => {
     setUserForm({
@@ -276,9 +256,9 @@ export default function AdminUsers() {
       status: "Hoạt động",
       password: "",
       confirmPassword: "",
-    });
-    setAddUserOpen(true);
-  };
+    })
+    setAddUserOpen(true)
+  }
 
   const handleEditUser = (user: User) => {
     setUserForm({
@@ -288,55 +268,51 @@ export default function AdminUsers() {
       phone: user.phone || "",
       role: user.role,
       status: user.status,
-    });
-    setEditUserOpen(true);
-  };
+    })
+    setEditUserOpen(true)
+  }
 
   const handleViewUser = (user: User) => {
-    setCurrentUser(user);
-    setViewUserOpen(true);
-  };
+    setCurrentUser(user)
+    setViewUserOpen(true)
+  }
 
   const handleResetPassword = (user: User) => {
-    setCurrentUser(user);
+    setCurrentUser(user)
     setUserForm({
       ...userForm,
       id: user.id,
       password: "",
       confirmPassword: "",
-    });
-    setResetPasswordOpen(true);
-  };
+    })
+    setResetPasswordOpen(true)
+  }
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setUserForm({
       ...userForm,
       [name]: value,
-    });
-  };
+    })
+  }
 
   const handleRoleChange = (value: string) => {
     setUserForm({
       ...userForm,
       role: value,
-    });
-  };
+    })
+  }
 
   const handleStatusChange = (value: string) => {
     setUserForm({
       ...userForm,
       status: value,
-    });
-  };
+    })
+  }
 
   const saveUser = () => {
-    const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, "0")}/${(
-      today.getMonth() + 1
-    )
-      .toString()
-      .padStart(2, "0")}/${today.getFullYear()}`;
+    const today = new Date()
+    const formattedDate = `${today.getDate().toString().padStart(2, "0")}/${(today.getMonth() + 1).toString().padStart(2, "0")}/${today.getFullYear()}`
 
     if (userForm.id) {
       // Edit existing user
@@ -351,10 +327,10 @@ export default function AdminUsers() {
                 role: userForm.role,
                 status: userForm.status,
               }
-            : user
-        )
-      );
-      setEditUserOpen(false);
+            : user,
+        ),
+      )
+      setEditUserOpen(false)
     } else {
       // Add new user
       const newUser: User = {
@@ -368,50 +344,47 @@ export default function AdminUsers() {
         createdAt: formattedDate,
         orders: 0,
         totalSpent: 0,
-      };
+      }
 
-      setUsers([...users, newUser]);
-      setAddUserOpen(false);
+      setUsers([...users, newUser])
+      setAddUserOpen(false)
     }
-  };
+  }
 
   const resetPassword = () => {
     // In a real app, this would call an API to reset the password
     // For this demo, we'll just close the dialog
-    setResetPasswordOpen(false);
-  };
+    setResetPasswordOpen(false)
+  }
 
   const toggleSelectUser = (userId: number) => {
     if (selectedUsers.includes(userId)) {
-      setSelectedUsers(selectedUsers.filter((id) => id !== userId));
+      setSelectedUsers(selectedUsers.filter((id) => id !== userId))
     } else {
-      setSelectedUsers([...selectedUsers, userId]);
+      setSelectedUsers([...selectedUsers, userId])
     }
-  };
+  }
 
   const toggleSelectAll = () => {
     if (selectedUsers.length === filteredUsers.length) {
-      setSelectedUsers([]);
+      setSelectedUsers([])
     } else {
-      setSelectedUsers(filteredUsers.map((user) => user.id));
+      setSelectedUsers(filteredUsers.map((user) => user.id))
     }
-  };
+  }
 
   const toggleSortOrder = () => {
-    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-  };
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+  }
 
   const exportUsers = () => {
     // In a real app, this would generate a CSV or Excel file
-    alert("Xuất danh sách người dùng thành công!");
-  };
+    alert("Xuất danh sách người dùng thành công!")
+  }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount)
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -422,10 +395,7 @@ export default function AdminUsers() {
             <Download className="mr-2 h-4 w-4" />
             Xuất Excel
           </Button>
-          <Button
-            className="bg-pink-600 hover:bg-pink-700"
-            onClick={handleAddUser}
-          >
+          <Button className="bg-pink-600 hover:bg-pink-700" onClick={handleAddUser}>
             <UserPlus className="mr-2 h-4 w-4" />
             Thêm người dùng mới
           </Button>
@@ -435,9 +405,7 @@ export default function AdminUsers() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Tổng người dùng
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Tổng người dùng</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{users.length}</div>
@@ -445,15 +413,15 @@ export default function AdminUsers() {
               +
               {
                 users.filter((u) => {
-                  const parts = u.createdAt.split("/");
+                  const parts = u.createdAt.split("/")
                   const date = new Date(
                     Number.parseInt(parts[2]),
                     Number.parseInt(parts[1]) - 1,
-                    Number.parseInt(parts[0])
-                  );
-                  const oneMonthAgo = new Date();
-                  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-                  return date > oneMonthAgo;
+                    Number.parseInt(parts[0]),
+                  )
+                  const oneMonthAgo = new Date()
+                  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+                  return date > oneMonthAgo
                 }).length
               }{" "}
               trong tháng này
@@ -466,16 +434,9 @@ export default function AdminUsers() {
             <CardTitle className="text-sm font-medium">Khách hàng</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.filter((u) => u.role === "Khách hàng").length}
-            </div>
+            <div className="text-2xl font-bold">{users.filter((u) => u.role === "Khách hàng").length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {Math.round(
-                (users.filter((u) => u.role === "Khách hàng").length /
-                  users.length) *
-                  100
-              )}
-              % tổng người dùng
+              {Math.round((users.filter((u) => u.role === "Khách hàng").length / users.length) * 100)}% tổng người dùng
             </p>
           </CardContent>
         </Card>
@@ -485,37 +446,21 @@ export default function AdminUsers() {
             <CardTitle className="text-sm font-medium">Nhân viên</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.filter((u) => u.role === "Nhân viên").length}
-            </div>
+            <div className="text-2xl font-bold">{users.filter((u) => u.role === "Nhân viên").length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {Math.round(
-                (users.filter((u) => u.role === "Nhân viên").length /
-                  users.length) *
-                  100
-              )}
-              % tổng người dùng
+              {Math.round((users.filter((u) => u.role === "Nhân viên").length / users.length) * 100)}% tổng người dùng
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Tài khoản bị khóa
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Tài khoản bị khóa</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.filter((u) => u.status === "Bị khóa").length}
-            </div>
+            <div className="text-2xl font-bold">{users.filter((u) => u.status === "Bị khóa").length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {Math.round(
-                (users.filter((u) => u.status === "Bị khóa").length /
-                  users.length) *
-                  100
-              )}
-              % tổng người dùng
+              {Math.round((users.filter((u) => u.status === "Bị khóa").length / users.length) * 100)}% tổng người dùng
             </p>
           </CardContent>
         </Card>
@@ -579,10 +524,7 @@ export default function AdminUsers() {
                 <option value="Bị khóa">Bị khóa</option>
               </select>
 
-              <Button
-                variant="outline"
-                onClick={() => setFilterDialogOpen(true)}
-              >
+              <Button variant="outline" onClick={() => setFilterDialogOpen(true)}>
                 <Filter className="h-4 w-4 mr-2" />
                 Lọc nâng cao
               </Button>
@@ -593,18 +535,10 @@ export default function AdminUsers() {
             <div className="bg-muted p-2 rounded-md mb-4 flex justify-between items-center">
               <span>{selectedUsers.length} người dùng đã chọn</span>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedUsers([])}
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedUsers([])}>
                   Bỏ chọn
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setBulkDeleteDialogOpen(true)}
-                >
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)}>
                   Xóa đã chọn
                 </Button>
               </div>
@@ -618,10 +552,7 @@ export default function AdminUsers() {
                   <TableRow>
                     <TableHead className="w-[40px]">
                       <Checkbox
-                        checked={
-                          selectedUsers.length === filteredUsers.length &&
-                          filteredUsers.length > 0
-                        }
+                        checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
                         onCheckedChange={toggleSelectAll}
                       />
                     </TableHead>
@@ -630,8 +561,8 @@ export default function AdminUsers() {
                       <div
                         className="flex items-center cursor-pointer"
                         onClick={() => {
-                          setSortBy("name");
-                          toggleSortOrder();
+                          setSortBy("name")
+                          toggleSortOrder()
                         }}
                       >
                         Tên người dùng
@@ -644,8 +575,8 @@ export default function AdminUsers() {
                       <div
                         className="flex items-center cursor-pointer"
                         onClick={() => {
-                          setSortBy("createdAt");
-                          toggleSortOrder();
+                          setSortBy("createdAt")
+                          toggleSortOrder()
                         }}
                       >
                         Ngày tạo
@@ -656,8 +587,8 @@ export default function AdminUsers() {
                       <div
                         className="flex items-center cursor-pointer"
                         onClick={() => {
-                          setSortBy("orders");
-                          toggleSortOrder();
+                          setSortBy("orders")
+                          toggleSortOrder()
                         }}
                       >
                         Đơn hàng
@@ -671,10 +602,7 @@ export default function AdminUsers() {
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={9}
-                        className="text-center py-10 text-muted-foreground"
-                      >
+                      <TableCell colSpan={9} className="text-center py-10 text-muted-foreground">
                         Không tìm thấy người dùng nào
                       </TableCell>
                     </TableRow>
@@ -693,9 +621,7 @@ export default function AdminUsers() {
                           <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={user.avatar} alt={user.name} />
-                              <AvatarFallback>
-                                {user.name.charAt(0)}
-                              </AvatarFallback>
+                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <span>{user.name}</span>
                           </div>
@@ -708,8 +634,8 @@ export default function AdminUsers() {
                               user.role === "Admin"
                                 ? "bg-purple-50 text-purple-700 border-purple-200"
                                 : user.role === "Nhân viên"
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : "bg-gray-50 text-gray-700 border-gray-200"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : "bg-gray-50 text-gray-700 border-gray-200"
                             }
                           >
                             {user.role}
@@ -720,9 +646,7 @@ export default function AdminUsers() {
                         <TableCell className="text-right">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              user.status === "Hoạt động"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
+                              user.status === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                             }`}
                           >
                             {user.status}
@@ -730,33 +654,17 @@ export default function AdminUsers() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleViewUser(user)}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleViewUser(user)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditUser(user)}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleResetPassword(user)}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleResetPassword(user)}>
                               <Lock className="h-4 w-4" />
                             </Button>
                             {user.role !== "Admin" && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteClick(user.id)}
-                              >
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(user.id)}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
@@ -794,17 +702,13 @@ export default function AdminUsers() {
                           <AvatarImage src={user.avatar} alt={user.name} />
                           <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <h3 className="font-semibold text-center">
-                          {user.name}
-                        </h3>
+                        <h3 className="font-semibold text-center">{user.name}</h3>
                         <Badge variant="outline" className="mt-1 mb-2">
                           {user.role}
                         </Badge>
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.status === "Hoạt động"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            user.status === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                           }`}
                         >
                           {user.status}
@@ -828,53 +732,30 @@ export default function AdminUsers() {
                         </div>
                         {user.role === "Khách hàng" && (
                           <div className="flex items-center justify-between pt-2 border-t mt-2">
-                            <span className="text-muted-foreground">
-                              Đơn hàng:
-                            </span>
+                            <span className="text-muted-foreground">Đơn hàng:</span>
                             <span className="font-medium">{user.orders}</span>
                           </div>
                         )}
-                        {user.role === "Khách hàng" &&
-                          user.totalSpent !== undefined && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">
-                                Chi tiêu:
-                              </span>
-                              <span className="font-medium">
-                                {formatCurrency(user.totalSpent)}
-                              </span>
-                            </div>
-                          )}
+                        {user.role === "Khách hàng" && user.totalSpent !== undefined && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Chi tiêu:</span>
+                            <span className="font-medium">{formatCurrency(user.totalSpent)}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="mt-4 flex justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewUser(user)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleViewUser(user)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditUser(user)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleResetPassword(user)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleResetPassword(user)}>
                           <Lock className="h-4 w-4" />
                         </Button>
                         {user.role !== "Admin" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteClick(user.id)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
@@ -888,18 +769,13 @@ export default function AdminUsers() {
 
           <div className="flex items-center justify-between mt-6">
             <div className="text-sm text-gray-500">
-              Hiển thị 1-{filteredUsers.length} của {filteredUsers.length} người
-              dùng
+              Hiển thị 1-{filteredUsers.length} của {filteredUsers.length} người dùng
             </div>
             <nav className="flex items-center gap-1">
               <Button variant="outline" size="icon" disabled>
                 &lt;
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-pink-600 text-white"
-              >
+              <Button variant="outline" size="icon" className="bg-pink-600 text-white">
                 1
               </Button>
               <Button variant="outline" size="icon">
@@ -916,22 +792,14 @@ export default function AdminUsers() {
           <DialogHeader>
             <DialogTitle>Xác nhận xóa người dùng</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể
-              hoàn tác.
+              Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Hủy
             </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <Button variant="destructive" onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
               Xóa
             </Button>
           </DialogFooter>
@@ -939,30 +807,19 @@ export default function AdminUsers() {
       </Dialog>
 
       {/* Bulk Delete confirmation dialog */}
-      <Dialog
-        open={bulkDeleteDialogOpen}
-        onOpenChange={setBulkDeleteDialogOpen}
-      >
+      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Xác nhận xóa nhiều người dùng</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa {selectedUsers.length} người dùng đã
-              chọn? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa {selectedUsers.length} người dùng đã chọn? Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setBulkDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setBulkDeleteDialogOpen(false)}>
               Hủy
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleBulkDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <Button variant="destructive" onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
               Xóa
             </Button>
           </DialogFooter>
@@ -974,9 +831,7 @@ export default function AdminUsers() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Lọc nâng cao</DialogTitle>
-            <DialogDescription>
-              Tùy chỉnh các bộ lọc để tìm người dùng chính xác hơn.
-            </DialogDescription>
+            <DialogDescription>Tùy chỉnh các bộ lọc để tìm người dùng chính xác hơn.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1040,10 +895,7 @@ export default function AdminUsers() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setFilterDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setFilterDialogOpen(false)}>
               Hủy
             </Button>
             <Button onClick={() => setFilterDialogOpen(false)}>Áp dụng</Button>
@@ -1062,10 +914,7 @@ export default function AdminUsers() {
             <div className="space-y-6 py-4">
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                  />
+                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
                   <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-center">
@@ -1078,17 +927,15 @@ export default function AdminUsers() {
                         currentUser.role === "Admin"
                           ? "bg-purple-50 text-purple-700 border-purple-200"
                           : currentUser.role === "Nhân viên"
-                          ? "bg-blue-50 text-blue-700 border-blue-200"
-                          : "bg-gray-50 text-gray-700 border-gray-200"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : "bg-gray-50 text-gray-700 border-gray-200"
                       }
                     >
                       {currentUser.role}
                     </Badge>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        currentUser.status === "Hoạt động"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+                        currentUser.status === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                       }`}
                     >
                       {currentUser.status}
@@ -1119,9 +966,7 @@ export default function AdminUsers() {
                     <div>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          currentUser.status === "Hoạt động"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                          currentUser.status === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                         }`}
                       >
                         {currentUser.status}
@@ -1170,17 +1015,12 @@ export default function AdminUsers() {
                           </div>
                           <div className="flex items-center justify-between pb-2 border-b">
                             <span>Sản phẩm đã mua:</span>
-                            <span className="font-medium">
-                              {currentUser.orders * 2}
-                            </span>
+                            <span className="font-medium">{currentUser.orders * 2}</span>
                           </div>
                           <div className="flex items-center justify-between pb-2 border-b">
                             <span>Giá trị trung bình/đơn:</span>
                             <span className="font-medium">
-                              {formatCurrency(
-                                (currentUser.totalSpent || 0) /
-                                  (currentUser.orders || 1)
-                              )}
+                              {formatCurrency((currentUser.totalSpent || 0) / (currentUser.orders || 1))}
                             </span>
                           </div>
                         </div>
@@ -1213,8 +1053,8 @@ export default function AdminUsers() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setViewUserOpen(false);
-                    handleEditUser(currentUser);
+                    setViewUserOpen(false)
+                    handleEditUser(currentUser)
                   }}
                 >
                   <Edit className="mr-2 h-4 w-4" />
@@ -1224,8 +1064,8 @@ export default function AdminUsers() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setViewUserOpen(false);
-                    handleResetPassword(currentUser);
+                    setViewUserOpen(false)
+                    handleResetPassword(currentUser)
                   }}
                 >
                   <Lock className="mr-2 h-4 w-4" />
@@ -1242,9 +1082,7 @@ export default function AdminUsers() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Thêm người dùng mới</DialogTitle>
-            <DialogDescription>
-              Điền thông tin người dùng mới vào form bên dưới.
-            </DialogDescription>
+            <DialogDescription>Điền thông tin người dùng mới vào form bên dưới.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -1299,10 +1137,7 @@ export default function AdminUsers() {
 
               <div className="space-y-2">
                 <Label htmlFor="status">Trạng thái</Label>
-                <Select
-                  value={userForm.status}
-                  onValueChange={handleStatusChange}
-                >
+                <Select value={userForm.status} onValueChange={handleStatusChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
@@ -1364,9 +1199,7 @@ export default function AdminUsers() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa người dùng</DialogTitle>
-            <DialogDescription>
-              Chỉnh sửa thông tin người dùng.
-            </DialogDescription>
+            <DialogDescription>Chỉnh sửa thông tin người dùng.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -1421,10 +1254,7 @@ export default function AdminUsers() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-status">Trạng thái</Label>
-                <Select
-                  value={userForm.status}
-                  onValueChange={handleStatusChange}
-                >
+                <Select value={userForm.status} onValueChange={handleStatusChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
@@ -1457,9 +1287,7 @@ export default function AdminUsers() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Đặt lại mật khẩu</DialogTitle>
-            <DialogDescription>
-              Đặt lại mật khẩu cho người dùng {currentUser?.name}.
-            </DialogDescription>
+            <DialogDescription>Đặt lại mật khẩu cho người dùng {currentUser?.name}.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -1489,19 +1317,13 @@ export default function AdminUsers() {
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setResetPasswordOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setResetPasswordOpen(false)}>
               Hủy
             </Button>
             <Button
               onClick={resetPassword}
               className="bg-pink-600 hover:bg-pink-700"
-              disabled={
-                !userForm.password ||
-                userForm.password !== userForm.confirmPassword
-              }
+              disabled={!userForm.password || userForm.password !== userForm.confirmPassword}
             >
               Đặt lại mật khẩu
             </Button>
@@ -1509,5 +1331,5 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

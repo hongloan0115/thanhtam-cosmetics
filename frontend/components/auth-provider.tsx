@@ -3,11 +3,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { useRouter, usePathname } from "next/navigation"
 
+// Cập nhật interface User để thêm trường phone
 interface User {
   id: number
   fullName: string
-  email: string
-  phone: string
+  email?: string
+  phone?: string
   role: string
   createdAt: string
   orders: any[]
@@ -17,7 +18,8 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<boolean>
+  isAuthenticated: boolean
+  login: (emailOrPhone: string, password: string) => Promise<boolean>
   register: (userData: any) => Promise<boolean>
   logout: () => void
   updateUser: (userData: Partial<User>) => void
@@ -28,63 +30,139 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Thay đổi hàm AuthProvider để tạm thời bỏ qua việc kiểm tra đăng nhập
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Tạo một user mẫu với quyền admin để có thể truy cập tất cả các trang
-  const defaultAdminUser = {
-    id: 1,
-    fullName: "Admin",
-    email: "admin@thanhtam.com",
-    phone: "0901234567",
-    role: "Admin",
-    createdAt: new Date().toISOString(),
-    orders: [],
-    wishlist: [],
-  }
-
-  const [user, setUser] = useState<User | null>(defaultAdminUser) // Luôn đặt user là admin
-  const [isLoading, setIsLoading] = useState(false) // Đặt isLoading là false để không hiển thị màn hình loading
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
+  // Kiểm tra xem người dùng đã đăng nhập chưa khi tải trang
   useEffect(() => {
-    // Khởi tạo users array với admin user nếu chưa tồn tại
-    const users = JSON.parse(localStorage.getItem("users") || "[]")
-    if (users.length === 0) {
-      localStorage.setItem("users", JSON.stringify([defaultAdminUser]))
+    const storedUser = localStorage.getItem("currentUser")
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
+      setIsAuthenticated(true)
     }
 
-    // Lưu user admin vào localStorage để đảm bảo tính nhất quán
-    localStorage.setItem("currentUser", JSON.stringify(defaultAdminUser))
+    // Khởi tạo users array nếu chưa tồn tại
+    const users = JSON.parse(localStorage.getItem("users") || "[]")
+    if (users.length === 0) {
+      const defaultAdminUser = {
+        id: 1,
+        fullName: "Admin",
+        email: "admin@thanhtam.com",
+        phone: "0901234567",
+        password: "admin123", // Trong thực tế, mật khẩu nên được mã hóa
+        role: "Admin",
+        createdAt: new Date().toISOString(),
+        orders: [],
+        wishlist: [],
+      }
+      localStorage.setItem("users", JSON.stringify([defaultAdminUser]))
+    }
 
     setIsLoading(false)
   }, [])
 
-  // Các hàm khác giữ nguyên
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Luôn trả về true để giả lập đăng nhập thành công
-    return Promise.resolve(true)
-  }
+  const login = async (emailOrPhone: string, password: string): Promise<boolean> => {
+    setIsLoading(true)
 
-  const register = async (userData: any): Promise<boolean> => {
-    // Luôn trả về true để giả lập đăng ký thành công
-    return Promise.resolve(true)
-  }
+    try {
+      // Lấy danh sách người dùng từ localStorage
+      const users = JSON.parse(localStorage.getItem("users") || "[]")
 
-  const logout = () => {
-    // Không xóa user, chỉ chuyển hướng về trang chủ nếu cần
-    if (pathname.startsWith("/account") || pathname.startsWith("/admin")) {
-      router.push("/")
+      // Tìm người dùng theo email hoặc số điện thoại
+      const foundUser = users.find(
+        (u: any) => (u.email && u.email === emailOrPhone) || (u.phone && u.phone === emailOrPhone),
+      )
+
+      // Kiểm tra mật khẩu
+      if (foundUser && foundUser.password === password) {
+        // Loại bỏ mật khẩu trước khi lưu vào state
+        const { password, ...userWithoutPassword } = foundUser
+        setUser(userWithoutPassword)
+        setIsAuthenticated(true)
+        localStorage.setItem("currentUser", JSON.stringify(userWithoutPassword))
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error("Login error:", error)
+      return false
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  // Các hàm còn lại giữ nguyên
+  const register = async (userData: any): Promise<boolean> => {
+    setIsLoading(true)
+
+    try {
+      // Lấy danh sách người dùng từ localStorage
+      const users = JSON.parse(localStorage.getItem("users") || "[]")
+
+      // Kiểm tra xem email hoặc số điện thoại đã tồn tại chưa
+      const emailExists = userData.email && users.some((u: any) => u.email === userData.email)
+      const phoneExists = userData.phone && users.some((u: any) => u.phone === userData.phone)
+
+      if (emailExists || phoneExists) {
+        return false
+      }
+
+      // Tạo người dùng mới
+      const newUser = {
+        id: users.length + 1,
+        fullName: userData.fullName,
+        email: userData.email || undefined,
+        phone: userData.phone || undefined,
+        password: userData.password, // Trong thực tế, mật khẩu nên được mã hóa
+        role: userData.role || "Khách hàng",
+        createdAt: new Date().toISOString(),
+        orders: [],
+        wishlist: [],
+      }
+
+      // Thêm người dùng mới vào danh sách
+      users.push(newUser)
+      localStorage.setItem("users", JSON.stringify(users))
+
+      // Đăng nhập người dùng mới
+      const { password, ...userWithoutPassword } = newUser
+      setUser(userWithoutPassword)
+      setIsAuthenticated(true)
+      localStorage.setItem("currentUser", JSON.stringify(userWithoutPassword))
+
+      return true
+    } catch (error) {
+      console.error("Registration error:", error)
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const logout = () => {
+    setUser(null)
+    setIsAuthenticated(false)
+    localStorage.removeItem("currentUser")
+
+    // Chuyển hướng về trang chủ
+    router.push("/")
+  }
+
   const updateUser = (userData: Partial<User>) => {
     if (!user) return
 
     const updatedUser = { ...user, ...userData }
     setUser(updatedUser)
     localStorage.setItem("currentUser", JSON.stringify(updatedUser))
+
+    // Cập nhật thông tin người dùng trong danh sách users
+    const users = JSON.parse(localStorage.getItem("users") || "[]")
+    const updatedUsers = users.map((u: any) => (u.id === user.id ? { ...u, ...userData } : u))
+    localStorage.setItem("users", JSON.stringify(updatedUsers))
   }
 
   const addToWishlist = (productId: number) => {
@@ -112,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isLoading,
+        isAuthenticated,
         login,
         register,
         logout,

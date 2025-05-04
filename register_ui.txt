@@ -1,0 +1,634 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Phone,
+  User,
+  Lock,
+  Mail,
+} from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { Separator } from "@/components/ui/separator";
+import api from "@/lib/axios";
+import { message } from "antd";
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const { register } = useAuth();
+
+  // Các bước đăng ký
+  const [step, setStep] = useState<"method" | "verify" | "complete">("method");
+
+  // Phương thức đăng ký
+  const [method, setMethod] = useState<"phone" | "google">("phone");
+
+  // Dữ liệu form
+  const [phone, setPhone] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // email registration data
+  const [email, setemail] = useState("");
+  const [emailPassword, setemailPassword] = useState("");
+  const [emailConfirmPassword, setemailConfirmPassword] = useState("");
+
+  // Trạng thái UI
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generalError, setGeneralError] = useState("");
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  // Xác thực số điện thoại
+  const validatePhone = () => {
+    if (!phone.trim()) {
+      setErrors({ phone: "Vui lòng nhập số điện thoại" });
+      return false;
+    } else if (!/^[0-9]{10,11}$/.test(phone.replace(/\s/g, ""))) {
+      setErrors({ phone: "Số điện thoại không hợp lệ" });
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
+  // Xác thực mã OTP
+  const validateOTP = () => {
+    if (verificationCode.length !== 6) {
+      setErrors({ otp: "Vui lòng nhập đủ 6 số" });
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
+  // Xác thực thông tin cá nhân
+  const validatePersonalInfo = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!fullName.trim()) {
+      newErrors.fullName = "Vui lòng nhập họ và tên";
+    }
+
+    if (!password) {
+      newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // email registration validation
+  const validateemailRegistration = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!email.trim()) {
+      newErrors.email = "Vui lòng nhập email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Email không hợp lệ";
+    }
+
+    if (!emailPassword) {
+      newErrors.emailPassword = "Vui lòng nhập mật khẩu";
+    } else if (emailPassword.length < 6) {
+      newErrors.emailPassword = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+
+    if (!emailConfirmPassword) {
+      newErrors.emailConfirmPassword = "Vui lòng xác nhận mật khẩu";
+    } else if (emailPassword !== emailConfirmPassword) {
+      newErrors.emailConfirmPassword = "Mật khẩu xác nhận không khớp";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Gửi mã xác thực đến Zalo (giả lập)
+  const sendVerificationCode = () => {
+    if (!validatePhone()) return;
+
+    setIsSubmitting(true);
+    setGeneralError("");
+
+    // Giả lập gửi mã xác thực
+    setTimeout(() => {
+      setIsCodeSent(true);
+      setIsSubmitting(false);
+      setStep("verify");
+
+      // Đặt thời gian đếm ngược 60 giây
+      setCountdown(60);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }, 1500);
+  };
+
+  // Xác thực mã OTP
+  const verifyCode = () => {
+    if (!validateOTP()) return;
+
+    setIsSubmitting(true);
+    setGeneralError("");
+
+    // Giả lập xác thực mã OTP (mã đúng là "123456")
+    setTimeout(() => {
+      if (verificationCode === "123456") {
+        setStep("complete");
+        setIsSubmitting(false);
+      } else {
+        setErrors({ otp: "Mã xác thực không đúng" });
+        setIsSubmitting(false);
+      }
+    }, 1500);
+  };
+
+  // Hoàn thành đăng ký
+  const completeRegistration = async () => {
+    if (!validatePersonalInfo()) return;
+
+    setIsSubmitting(true);
+    setGeneralError("");
+
+    try {
+      // Đăng ký người dùng
+      const success = await register({
+        fullName: fullName,
+        phone: phone,
+        password: password,
+        role: "Khách hàng",
+      });
+
+      if (success) {
+        router.push("/account");
+      } else {
+        setGeneralError("Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau.");
+      }
+    } catch (error) {
+      setGeneralError("Đã xảy ra lỗi. Vui lòng thử lại sau.");
+      console.error("Registration error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // email registration handler
+  const handleEmailRegistration = async () => {
+    if (!validateemailRegistration()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await api.post("/api/auth/register", {
+        username: email,
+        password: emailPassword,
+      });
+
+      message.success("Đăng ký thành công!");
+      router.push("/auth/login"); // Redirect to login page
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.message ||
+          "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau."
+      );
+      console.error("Registration error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Đăng ký bằng Google
+  const handleGoogleSignup = async () => {
+    setIsSubmitting(true);
+
+    try {
+      await api.get("/api/v1/session/init");
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/login/google`;
+    } catch (error) {
+      message.error("Đăng ký với Google thất bại. Vui lòng thử lại.");
+      console.error("Google signup error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="container py-12">
+      <div className="max-w-md mx-auto">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              Đăng ký tài khoản
+            </CardTitle>
+            <CardDescription className="text-center">
+              {step === "method" && "Chọn phương thức đăng ký tài khoản"}
+              {step === "verify" && "Nhập mã xác thực đã gửi đến Zalo của bạn"}
+              {step === "complete" && "Hoàn thành thông tin tài khoản của bạn"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {generalError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{generalError}</AlertDescription>
+              </Alert>
+            )}
+
+            {step === "method" && (
+              <div className="space-y-4">
+                <Tabs
+                  defaultValue="phone"
+                  onValueChange={(value) =>
+                    setMethod(value as "phone" | "google")
+                  }
+                >
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="phone">Số điện thoại</TabsTrigger>
+                    <TabsTrigger value="google">Email</TabsTrigger>
+                    <TabsTrigger value="googleAccount">Google</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="phone" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Số điện thoại</Label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                          <Input
+                            id="phone"
+                            placeholder="0912345678"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className={`pl-10 ${
+                              errors.phone ? "border-red-500" : ""
+                            }`}
+                          />
+                        </div>
+                        <Button
+                          onClick={sendVerificationCode}
+                          disabled={isSubmitting}
+                          className="bg-pink-600 hover:bg-pink-700"
+                        >
+                          {isSubmitting ? "Đang gửi..." : "Gửi mã"}
+                        </Button>
+                      </div>
+                      {errors.phone && (
+                        <p className="text-sm text-red-500">{errors.phone}</p>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="google" className="space-y-4 pt-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                          <Input
+                            id="email"
+                            placeholder="example@email.com"
+                            value={email}
+                            onChange={(e) => setemail(e.target.value)}
+                            className={`pl-10 ${
+                              errors.email ? "border-red-500" : ""
+                            }`}
+                          />
+                        </div>
+                        {errors.email && (
+                          <p className="text-sm text-red-500">{errors.email}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="emailPassword">Mật khẩu</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                          <Input
+                            id="emailPassword"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={emailPassword}
+                            onChange={(e) => setemailPassword(e.target.value)}
+                            className={`pl-10 pr-10 ${
+                              errors.emailPassword ? "border-red-500" : ""
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff size={16} />
+                            ) : (
+                              <Eye size={16} />
+                            )}
+                          </button>
+                        </div>
+                        {errors.emailPassword && (
+                          <p className="text-sm text-red-500">
+                            {errors.emailPassword}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="emailConfirmPassword">
+                          Xác nhận mật khẩu
+                        </Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                          <Input
+                            id="emailConfirmPassword"
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={emailConfirmPassword}
+                            onChange={(e) =>
+                              setemailConfirmPassword(e.target.value)
+                            }
+                            className={`pl-10 pr-10 ${
+                              errors.emailConfirmPassword
+                                ? "border-red-500"
+                                : ""
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff size={16} />
+                            ) : (
+                              <Eye size={16} />
+                            )}
+                          </button>
+                        </div>
+                        {errors.emailConfirmPassword && (
+                          <p className="text-sm text-red-500">
+                            {errors.emailConfirmPassword}
+                          </p>
+                        )}
+                      </div>
+
+                      <Button
+                        onClick={handleEmailRegistration}
+                        className="w-full bg-pink-600 hover:bg-pink-700"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Đang xử lý..." : "Đăng ký"}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="googleAccount" className="space-y-4 pt-4">
+                    <div className="text-center">
+                      <Button
+                        onClick={handleGoogleSignup}
+                        className="w-full bg-pink-600 hover:bg-pink-700"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Đang xử lý..." : "Đăng ký với Google"}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+
+            {step === "verify" && (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Mã xác thực đã được gửi đến Zalo của số điện thoại
+                  </p>
+                  <p className="font-medium">{phone}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="otp">Nhập mã xác thực</Label>
+                  <InputOTP
+                    maxLength={6}
+                    value={verificationCode}
+                    onChange={setVerificationCode}
+                  >
+                    <InputOTPGroup className="flex justify-between gap-2">
+                      <InputOTPSlot
+                        index={0}
+                        className="w-12 h-12 text-center border rounded-md"
+                      />
+                      <InputOTPSlot
+                        index={1}
+                        className="w-12 h-12 text-center border rounded-md"
+                      />
+                      <InputOTPSlot
+                        index={2}
+                        className="w-12 h-12 text-center border rounded-md"
+                      />
+                      <InputOTPSlot
+                        index={3}
+                        className="w-12 h-12 text-center border rounded-md"
+                      />
+                      <InputOTPSlot
+                        index={4}
+                        className="w-12 h-12 text-center border rounded-md"
+                      />
+                      <InputOTPSlot
+                        index={5}
+                        className="w-12 h-12 text-center border rounded-md"
+                      />
+                    </InputOTPGroup>
+                  </InputOTP>
+                  {errors.otp && (
+                    <p className="text-sm text-red-500">{errors.otp}</p>
+                  )}
+                  <div className="text-center mt-4">
+                    {countdown > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Gửi lại mã sau {countdown} giây
+                      </p>
+                    ) : (
+                      <Button
+                        variant="link"
+                        className="text-pink-600 p-0 h-auto"
+                        onClick={sendVerificationCode}
+                        disabled={isSubmitting}
+                      >
+                        Gửi lại mã
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={verifyCode}
+                  className="w-full bg-pink-600 hover:bg-pink-700"
+                  disabled={isSubmitting || verificationCode.length !== 6}
+                >
+                  {isSubmitting ? "Đang xác thực..." : "Xác thực"}
+                </Button>
+              </div>
+            )}
+
+            {step === "complete" && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Họ và tên</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                    <Input
+                      id="fullName"
+                      placeholder="Nguyễn Văn A"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className={`pl-10 ${
+                        errors.fullName ? "border-red-500" : ""
+                      }`}
+                    />
+                  </div>
+                  {errors.fullName && (
+                    <p className="text-sm text-red-500">{errors.fullName}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Mật khẩu</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={`pl-10 pr-10 ${
+                        errors.password ? "border-red-500" : ""
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-red-500">{errors.password}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={`pl-10 pr-10 ${
+                        errors.confirmPassword ? "border-red-500" : ""
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-red-500">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={completeRegistration}
+                  className="w-full bg-pink-600 hover:bg-pink-700"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Đang xử lý..." : "Hoàn thành đăng ký"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-center text-sm">
+              Bằng cách đăng ký, bạn đồng ý với{" "}
+              <Link href="/terms" className="text-pink-600 hover:underline">
+                Điều khoản sử dụng
+              </Link>{" "}
+              và{" "}
+              <Link href="/privacy" className="text-pink-600 hover:underline">
+                Chính sách bảo mật
+              </Link>{" "}
+              của chúng tôi.
+            </div>
+            <Separator />
+            <div className="text-center text-sm">
+              Đã có tài khoản?{" "}
+              <Link
+                href="/auth/login"
+                className="text-pink-600 hover:underline font-medium"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -1,20 +1,26 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import AdminSidebar from "@/components/admin/admin-sidebar";
+import type React from "react"
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import { useEffect } from "react"
+import AdminSidebar from "@/components/admin/admin-sidebar"
+import { AuthProvider } from "@/components/auth-provider"
+import RouteGuard from "@/components/route-guard"
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Cuộn lên đầu trang khi chuyển trang
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <div className="flex-1 overflow-auto">{children}</div>
-      </div>
-    </SidebarProvider>
-  );
+    <AuthProvider>
+      <RouteGuard requireAdmin={true}>
+        <div className="flex min-h-screen">
+          <AdminSidebar />
+          <main className="flex-1 p-6 overflow-auto">{children}</main>
+        </div>
+      </RouteGuard>
+    </AuthProvider>
+  )
 }
