@@ -1,52 +1,61 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { useRouter, usePathname } from "next/navigation";
+import axiosInstance from "@/utils/axios-instance";
+import { AuthService } from "@/core/service/api/auth-service";
 
-// Cập nhật interface User để thêm trường phone
 interface User {
-  id: number
-  fullName: string
-  email?: string
-  phone?: string
-  role: string
-  createdAt: string
-  orders: any[]
-  wishlist: number[]
+  id: number;
+  username: string; // Update to match the provided data
+  email: string;
+  phone: string;
+  role: string;
+  avatar_url: string | null; // Add avatar_url field
+  is_active: boolean; // Add is_active field
+  created_at: string; // Update to match the provided data
+  updated_at: string; // Add updated_at field
+  wishlist: number[]; // Keep wishlist field
 }
 
 interface AuthContextType {
-  user: User | null
-  isLoading: boolean
-  isAuthenticated: boolean
-  login: (emailOrPhone: string, password: string) => Promise<boolean>
-  register: (userData: any) => Promise<boolean>
-  logout: () => void
-  updateUser: (userData: Partial<User>) => void
-  addToWishlist: (productId: number) => void
-  removeFromWishlist: (productId: number) => void
-  isInWishlist: (productId: number) => boolean
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (emailOrPhone: string, password: string) => Promise<boolean>;
+  register: (userData: any) => Promise<boolean>;
+  logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
+  addToWishlist: (productId: number) => void;
+  removeFromWishlist: (productId: number) => void;
+  isInWishlist: (productId: number) => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const router = useRouter()
-  const pathname = usePathname()
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Kiểm tra xem người dùng đã đăng nhập chưa khi tải trang
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser")
+    const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
-      setIsAuthenticated(true)
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
     }
 
     // Khởi tạo users array nếu chưa tồn tại
-    const users = JSON.parse(localStorage.getItem("users") || "[]")
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
     if (users.length === 0) {
       const defaultAdminUser = {
         id: 1,
@@ -58,132 +67,137 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
         orders: [],
         wishlist: [],
-      }
-      localStorage.setItem("users", JSON.stringify([defaultAdminUser]))
+      };
+      localStorage.setItem("users", JSON.stringify([defaultAdminUser]));
     }
 
-    setIsLoading(false)
-  }, [])
+    setIsLoading(false);
+  }, []);
 
-  const login = async (emailOrPhone: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
+  const login = async (
+    emailOrPhone: string,
+    password: string
+  ): Promise<boolean> => {
+    setIsLoading(true);
 
     try {
-      // Lấy danh sách người dùng từ localStorage
-      const users = JSON.parse(localStorage.getItem("users") || "[]")
+      // Call the login API using AuthService
+      const { access_token } = await AuthService.login(emailOrPhone, password);
 
-      // Tìm người dùng theo email hoặc số điện thoại
-      const foundUser = users.find(
-        (u: any) => (u.email && u.email === emailOrPhone) || (u.phone && u.phone === emailOrPhone),
-      )
+      // Save the token to localStorage
+      localStorage.setItem("accessToken", access_token);
 
-      // Kiểm tra mật khẩu
-      if (foundUser && foundUser.password === password) {
-        // Loại bỏ mật khẩu trước khi lưu vào state
-        const { password, ...userWithoutPassword } = foundUser
-        setUser(userWithoutPassword)
-        setIsAuthenticated(true)
-        localStorage.setItem("currentUser", JSON.stringify(userWithoutPassword))
-        return true
-      }
+      // Fetch user info using AuthService
+      const userInfo = await AuthService.getCurrentUser();
 
-      return false
+      // Update user state
+      setUser(userInfo);
+      setIsAuthenticated(true);
+      localStorage.setItem("currentUser", JSON.stringify(userInfo));
+
+      return true;
     } catch (error) {
-      console.error("Login error:", error)
-      return false
+      console.error("Login error:", error);
+      return false;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const register = async (userData: any): Promise<boolean> => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       // Lấy danh sách người dùng từ localStorage
-      const users = JSON.parse(localStorage.getItem("users") || "[]")
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
 
       // Kiểm tra xem email hoặc số điện thoại đã tồn tại chưa
-      const emailExists = userData.email && users.some((u: any) => u.email === userData.email)
-      const phoneExists = userData.phone && users.some((u: any) => u.phone === userData.phone)
+      const emailExists =
+        userData.email && users.some((u: any) => u.email === userData.email);
+      const phoneExists =
+        userData.phone && users.some((u: any) => u.phone === userData.phone);
 
       if (emailExists || phoneExists) {
-        return false
+        return false;
       }
 
       // Tạo người dùng mới
       const newUser = {
         id: users.length + 1,
-        fullName: userData.fullName,
-        email: userData.email || undefined,
-        phone: userData.phone || undefined,
+        username: userData.fullName || `user_${users.length + 1}`, // Ensure username is set
+        email: userData.email || "",
+        phone: userData.phone || "",
         password: userData.password, // Trong thực tế, mật khẩu nên được mã hóa
-        role: userData.role || "Khách hàng",
-        createdAt: new Date().toISOString(),
-        orders: [],
+        role: userData.role || "customer",
+        avatar_url: null, // Default avatar_url
+        is_active: true, // Default is_active
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         wishlist: [],
-      }
+      };
 
       // Thêm người dùng mới vào danh sách
-      users.push(newUser)
-      localStorage.setItem("users", JSON.stringify(users))
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
 
       // Đăng nhập người dùng mới
-      const { password, ...userWithoutPassword } = newUser
-      setUser(userWithoutPassword)
-      setIsAuthenticated(true)
-      localStorage.setItem("currentUser", JSON.stringify(userWithoutPassword))
+      const { password, ...userWithoutPassword } = newUser;
+      setUser(userWithoutPassword as User); // Ensure the object matches the User interface
+      setIsAuthenticated(true);
+      localStorage.setItem("currentUser", JSON.stringify(userWithoutPassword));
 
-      return true
+      return true;
     } catch (error) {
-      console.error("Registration error:", error)
-      return false
+      console.error("Registration error:", error);
+      return false;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const logout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
-    localStorage.removeItem("currentUser")
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem("currentUser");
 
     // Chuyển hướng về trang chủ
-    router.push("/")
-  }
+    router.push("/");
+  };
 
   const updateUser = (userData: Partial<User>) => {
-    if (!user) return
+    if (!user) return;
 
-    const updatedUser = { ...user, ...userData }
-    setUser(updatedUser)
-    localStorage.setItem("currentUser", JSON.stringify(updatedUser))
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
     // Cập nhật thông tin người dùng trong danh sách users
-    const users = JSON.parse(localStorage.getItem("users") || "[]")
-    const updatedUsers = users.map((u: any) => (u.id === user.id ? { ...u, ...userData } : u))
-    localStorage.setItem("users", JSON.stringify(updatedUsers))
-  }
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    const updatedUsers = users.map((u: any) =>
+      u.id === user.id ? { ...u, ...userData } : u
+    );
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
+  };
 
   const addToWishlist = (productId: number) => {
-    if (!user) return
+    if (!user) return;
 
-    if (user.wishlist.includes(productId)) return
+    if (user.wishlist.includes(productId)) return;
 
-    const updatedWishlist = [...user.wishlist, productId]
-    updateUser({ wishlist: updatedWishlist })
-  }
+    const updatedWishlist = [...user.wishlist, productId];
+    updateUser({ wishlist: updatedWishlist });
+  };
 
   const removeFromWishlist = (productId: number) => {
-    if (!user) return
+    if (!user) return;
 
-    const updatedWishlist = user.wishlist.filter((id) => id !== productId)
-    updateUser({ wishlist: updatedWishlist })
-  }
+    const updatedWishlist = user.wishlist.filter((id) => id !== productId);
+    updateUser({ wishlist: updatedWishlist });
+  };
 
   const isInWishlist = (productId: number): boolean => {
-    return user ? user.wishlist.includes(productId) : false
-  }
+    return user ? user.wishlist.includes(productId) : false;
+  };
 
   return (
     <AuthContext.Provider
@@ -202,13 +216,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }

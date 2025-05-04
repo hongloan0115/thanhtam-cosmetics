@@ -1,170 +1,182 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/auth-provider"
-import AccountLayout from "@/components/account-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useState } from "react"
-import { Eye, EyeOff, Save } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth-provider";
+import AccountLayout from "@/components/account-layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { Eye, EyeOff, Save } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AccountPage() {
-  const { user, isLoading, updateUser } = useAuth()
-  const router = useRouter()
+  const { user, isLoading, updateUser } = useAuth();
+  const router = useRouter();
 
   const [personalInfo, setPersonalInfo] = useState({
     fullName: "",
     email: "",
     phone: "",
-  })
+  });
 
   const [passwordInfo, setPasswordInfo] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-  })
+  });
 
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [personalInfoErrors, setPersonalInfoErrors] = useState<Record<string, string>>({})
-  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({})
+  const [personalInfoErrors, setPersonalInfoErrors] = useState<
+    Record<string, string>
+  >({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>(
+    {}
+  );
 
-  const [personalInfoSuccess, setPersonalInfoSuccess] = useState(false)
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [personalInfoSuccess, setPersonalInfoSuccess] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  const [isSubmittingPersonal, setIsSubmittingPersonal] = useState(false)
-  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
+  const [isSubmittingPersonal, setIsSubmittingPersonal] = useState(false);
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
 
   useEffect(() => {
     // Chỉ cập nhật form khi có user, không redirect
     if (user) {
       setPersonalInfo({
-        fullName: user.fullName,
+        fullName: user.username, // Use username instead of fullName
         email: user.email,
         phone: user.phone,
-      })
+      });
     }
-  }, [user])
+  }, [user]);
 
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setPersonalInfo((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setPersonalInfo((prev) => ({ ...prev, [name]: value }));
 
     // Clear error when user types
     if (personalInfoErrors[name]) {
       setPersonalInfoErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
 
     // Clear success message when user makes changes
     if (personalInfoSuccess) {
-      setPersonalInfoSuccess(false)
+      setPersonalInfoSuccess(false);
     }
-  }
+  };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setPasswordInfo((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setPasswordInfo((prev) => ({ ...prev, [name]: value }));
 
     // Clear error when user types
     if (passwordErrors[name]) {
       setPasswordErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
 
     // Clear success message when user makes changes
     if (passwordSuccess) {
-      setPasswordSuccess(false)
+      setPasswordSuccess(false);
     }
-  }
+  };
 
   const validatePersonalInfo = () => {
-    const errors: Record<string, string> = {}
+    const errors: Record<string, string> = {};
 
     if (!personalInfo.fullName.trim()) {
-      errors.fullName = "Vui lòng nhập họ và tên"
+      errors.fullName = "Vui lòng nhập họ và tên";
     }
 
     if (!personalInfo.phone.trim()) {
-      errors.phone = "Vui lòng nhập số điện thoại"
+      errors.phone = "Vui lòng nhập số điện thoại";
     } else if (!/^[0-9]{10,11}$/.test(personalInfo.phone.replace(/\s/g, ""))) {
-      errors.phone = "Số điện thoại không hợp lệ"
+      errors.phone = "Số điện thoại không hợp lệ";
     }
 
-    setPersonalInfoErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setPersonalInfoErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const validatePasswordInfo = () => {
-    const errors: Record<string, string> = {}
+    const errors: Record<string, string> = {};
 
     if (!passwordInfo.currentPassword) {
-      errors.currentPassword = "Vui lòng nhập mật khẩu hiện tại"
+      errors.currentPassword = "Vui lòng nhập mật khẩu hiện tại";
     }
 
     if (!passwordInfo.newPassword) {
-      errors.newPassword = "Vui lòng nhập mật khẩu mới"
+      errors.newPassword = "Vui lòng nhập mật khẩu mới";
     } else if (passwordInfo.newPassword.length < 6) {
-      errors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự"
+      errors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự";
     }
 
     if (!passwordInfo.confirmPassword) {
-      errors.confirmPassword = "Vui lòng xác nhận mật khẩu mới"
+      errors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
     } else if (passwordInfo.newPassword !== passwordInfo.confirmPassword) {
-      errors.confirmPassword = "Mật khẩu xác nhận không khớp"
+      errors.confirmPassword = "Mật khẩu xác nhận không khớp";
     }
 
-    setPasswordErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setPasswordErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleUpdatePersonalInfo = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validatePersonalInfo()) return
+    if (!validatePersonalInfo()) return;
 
-    setIsSubmittingPersonal(true)
+    setIsSubmittingPersonal(true);
 
     // Simulate API call
     setTimeout(() => {
       try {
         // In a real app, this would be an API call
         updateUser({
-          fullName: personalInfo.fullName,
+          username: personalInfo.fullName, // Update username instead of fullName
           phone: personalInfo.phone,
-        })
+        });
 
-        setPersonalInfoSuccess(true)
+        setPersonalInfoSuccess(true);
       } catch (error) {
-        console.error("Error updating personal info:", error)
-        setPersonalInfoErrors({ general: "Đã xảy ra lỗi. Vui lòng thử lại sau." })
+        console.error("Error updating personal info:", error);
+        setPersonalInfoErrors({
+          general: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+        });
       } finally {
-        setIsSubmittingPersonal(false)
+        setIsSubmittingPersonal(false);
       }
-    }, 1000)
-  }
+    }, 1000);
+  };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validatePasswordInfo()) return
+    if (!validatePasswordInfo()) return;
 
-    setIsSubmittingPassword(true)
+    setIsSubmittingPassword(true);
 
     // Simulate API call
     setTimeout(() => {
@@ -173,54 +185,62 @@ export default function AccountPage() {
         // For this demo, we'll just show a success message
 
         // Get users from localStorage
-        const users = JSON.parse(localStorage.getItem("users") || "[]")
-        const userIndex = users.findIndex((u: any) => u.id === user?.id)
+        const users = JSON.parse(localStorage.getItem("users") || "[]");
+        const userIndex = users.findIndex((u: any) => u.id === user?.id);
 
         if (userIndex === -1) {
-          setPasswordErrors({ general: "Người dùng không tồn tại" })
-          return
+          setPasswordErrors({ general: "Người dùng không tồn tại" });
+          return;
         }
 
         // Check current password
         if (users[userIndex].password !== passwordInfo.currentPassword) {
-          setPasswordErrors({ currentPassword: "Mật khẩu hiện tại không chính xác" })
-          return
+          setPasswordErrors({
+            currentPassword: "Mật khẩu hiện tại không chính xác",
+          });
+          return;
         }
 
         // Update password
-        users[userIndex].password = passwordInfo.newPassword
-        localStorage.setItem("users", JSON.stringify(users))
+        users[userIndex].password = passwordInfo.newPassword;
+        localStorage.setItem("users", JSON.stringify(users));
 
         // Update current user
-        const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}")
-        currentUser.password = passwordInfo.newPassword
-        localStorage.setItem("currentUser", JSON.stringify(currentUser))
+        const currentUser = JSON.parse(
+          localStorage.getItem("currentUser") || "{}"
+        );
+        currentUser.password = passwordInfo.newPassword;
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
-        setPasswordSuccess(true)
+        setPasswordSuccess(true);
         setPasswordInfo({
           currentPassword: "",
           newPassword: "",
           confirmPassword: "",
-        })
+        });
       } catch (error) {
-        console.error("Error updating password:", error)
-        setPasswordErrors({ general: "Đã xảy ra lỗi. Vui lòng thử lại sau." })
+        console.error("Error updating password:", error);
+        setPasswordErrors({ general: "Đã xảy ra lỗi. Vui lòng thử lại sau." });
       } finally {
-        setIsSubmittingPassword(false)
+        setIsSubmittingPassword(false);
       }
-    }, 1000)
-  }
+    }, 1000);
+  };
 
   if (isLoading || !user) {
-    return <div className="container py-8">Đang tải...</div>
+    return <div className="container py-8">Đang tải...</div>;
   }
 
   return (
     <AccountLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tài khoản của tôi</h1>
-          <p className="text-muted-foreground">Quản lý thông tin cá nhân và mật khẩu của bạn</p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Tài khoản của tôi
+          </h1>
+          <p className="text-muted-foreground">
+            Quản lý thông tin cá nhân và mật khẩu của bạn
+          </p>
         </div>
 
         <Tabs defaultValue="personal-info" className="space-y-4">
@@ -233,18 +253,24 @@ export default function AccountPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Thông tin cá nhân</CardTitle>
-                <CardDescription>Cập nhật thông tin cá nhân của bạn</CardDescription>
+                <CardDescription>
+                  Cập nhật thông tin cá nhân của bạn
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {personalInfoSuccess && (
                   <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
-                    <AlertDescription>Thông tin cá nhân đã được cập nhật thành công!</AlertDescription>
+                    <AlertDescription>
+                      Thông tin cá nhân đã được cập nhật thành công!
+                    </AlertDescription>
                   </Alert>
                 )}
 
                 {personalInfoErrors.general && (
                   <Alert className="mb-4 bg-red-50 text-red-800 border-red-200">
-                    <AlertDescription>{personalInfoErrors.general}</AlertDescription>
+                    <AlertDescription>
+                      {personalInfoErrors.general}
+                    </AlertDescription>
                   </Alert>
                 )}
 
@@ -256,17 +282,29 @@ export default function AccountPage() {
                       name="fullName"
                       value={personalInfo.fullName}
                       onChange={handlePersonalInfoChange}
-                      className={personalInfoErrors.fullName ? "border-red-500" : ""}
+                      className={
+                        personalInfoErrors.fullName ? "border-red-500" : ""
+                      }
                     />
                     {personalInfoErrors.fullName && (
-                      <p className="text-sm text-red-500">{personalInfoErrors.fullName}</p>
+                      <p className="text-sm text-red-500">
+                        {personalInfoErrors.fullName}
+                      </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" value={personalInfo.email} disabled className="bg-gray-50" />
-                    <p className="text-sm text-muted-foreground">Email không thể thay đổi</p>
+                    <Input
+                      id="email"
+                      name="email"
+                      value={personalInfo.email}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Email không thể thay đổi
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -276,12 +314,22 @@ export default function AccountPage() {
                       name="phone"
                       value={personalInfo.phone}
                       onChange={handlePersonalInfoChange}
-                      className={personalInfoErrors.phone ? "border-red-500" : ""}
+                      className={
+                        personalInfoErrors.phone ? "border-red-500" : ""
+                      }
                     />
-                    {personalInfoErrors.phone && <p className="text-sm text-red-500">{personalInfoErrors.phone}</p>}
+                    {personalInfoErrors.phone && (
+                      <p className="text-sm text-red-500">
+                        {personalInfoErrors.phone}
+                      </p>
+                    )}
                   </div>
 
-                  <Button type="submit" className="bg-pink-600 hover:bg-pink-700" disabled={isSubmittingPersonal}>
+                  <Button
+                    type="submit"
+                    className="bg-pink-600 hover:bg-pink-700"
+                    disabled={isSubmittingPersonal}
+                  >
                     {isSubmittingPersonal ? (
                       "Đang cập nhật..."
                     ) : (
@@ -300,18 +348,24 @@ export default function AccountPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Đổi mật khẩu</CardTitle>
-                <CardDescription>Cập nhật mật khẩu của bạn để bảo mật tài khoản</CardDescription>
+                <CardDescription>
+                  Cập nhật mật khẩu của bạn để bảo mật tài khoản
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {passwordSuccess && (
                   <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
-                    <AlertDescription>Mật khẩu đã được cập nhật thành công!</AlertDescription>
+                    <AlertDescription>
+                      Mật khẩu đã được cập nhật thành công!
+                    </AlertDescription>
                   </Alert>
                 )}
 
                 {passwordErrors.general && (
                   <Alert className="mb-4 bg-red-50 text-red-800 border-red-200">
-                    <AlertDescription>{passwordErrors.general}</AlertDescription>
+                    <AlertDescription>
+                      {passwordErrors.general}
+                    </AlertDescription>
                   </Alert>
                 )}
 
@@ -325,18 +379,30 @@ export default function AccountPage() {
                         type={showCurrentPassword ? "text" : "password"}
                         value={passwordInfo.currentPassword}
                         onChange={handlePasswordChange}
-                        className={passwordErrors.currentPassword ? "border-red-500 pr-10" : "pr-10"}
+                        className={
+                          passwordErrors.currentPassword
+                            ? "border-red-500 pr-10"
+                            : "pr-10"
+                        }
                       />
                       <button
                         type="button"
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        onClick={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }
                       >
-                        {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showCurrentPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
                       </button>
                     </div>
                     {passwordErrors.currentPassword && (
-                      <p className="text-sm text-red-500">{passwordErrors.currentPassword}</p>
+                      <p className="text-sm text-red-500">
+                        {passwordErrors.currentPassword}
+                      </p>
                     )}
                   </div>
 
@@ -349,21 +415,35 @@ export default function AccountPage() {
                         type={showNewPassword ? "text" : "password"}
                         value={passwordInfo.newPassword}
                         onChange={handlePasswordChange}
-                        className={passwordErrors.newPassword ? "border-red-500 pr-10" : "pr-10"}
+                        className={
+                          passwordErrors.newPassword
+                            ? "border-red-500 pr-10"
+                            : "pr-10"
+                        }
                       />
                       <button
                         type="button"
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                         onClick={() => setShowNewPassword(!showNewPassword)}
                       >
-                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showNewPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
                       </button>
                     </div>
-                    {passwordErrors.newPassword && <p className="text-sm text-red-500">{passwordErrors.newPassword}</p>}
+                    {passwordErrors.newPassword && (
+                      <p className="text-sm text-red-500">
+                        {passwordErrors.newPassword}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+                    <Label htmlFor="confirmPassword">
+                      Xác nhận mật khẩu mới
+                    </Label>
                     <div className="relative">
                       <Input
                         id="confirmPassword"
@@ -371,23 +451,41 @@ export default function AccountPage() {
                         type={showConfirmPassword ? "text" : "password"}
                         value={passwordInfo.confirmPassword}
                         onChange={handlePasswordChange}
-                        className={passwordErrors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
+                        className={
+                          passwordErrors.confirmPassword
+                            ? "border-red-500 pr-10"
+                            : "pr-10"
+                        }
                       />
                       <button
                         type="button"
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
-                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showConfirmPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
                       </button>
                     </div>
                     {passwordErrors.confirmPassword && (
-                      <p className="text-sm text-red-500">{passwordErrors.confirmPassword}</p>
+                      <p className="text-sm text-red-500">
+                        {passwordErrors.confirmPassword}
+                      </p>
                     )}
                   </div>
 
-                  <Button type="submit" className="bg-pink-600 hover:bg-pink-700" disabled={isSubmittingPassword}>
-                    {isSubmittingPassword ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
+                  <Button
+                    type="submit"
+                    className="bg-pink-600 hover:bg-pink-700"
+                    disabled={isSubmittingPassword}
+                  >
+                    {isSubmittingPassword
+                      ? "Đang cập nhật..."
+                      : "Cập nhật mật khẩu"}
                   </Button>
                 </form>
               </CardContent>
@@ -396,5 +494,5 @@ export default function AccountPage() {
         </Tabs>
       </div>
     </AccountLayout>
-  )
+  );
 }

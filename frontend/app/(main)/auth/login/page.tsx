@@ -26,7 +26,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import axiosInstance from "@/utils/axios-instance";
+import { AuthService } from "@/core/service/api/auth-service"; // Use AuthService for API calls
 
 export default function LoginPage() {
   const router = useRouter();
@@ -70,12 +70,9 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await axiosInstance.post("/api/auth/login", {
-        username_or_email: identifier,
-        password: password,
-      });
-
-      if (response.status === 200) {
+      // Use AuthService for login
+      const success = await login(identifier, password);
+      if (success) {
         router.push("/account");
       } else {
         setError(

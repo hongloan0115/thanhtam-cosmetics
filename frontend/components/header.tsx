@@ -1,28 +1,40 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { ShoppingCart, User, Search, Menu, X, Heart, LogOut, ShoppingBag } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
-import { usePathname } from "next/navigation"
-import { useAuth } from "@/components/auth-provider"
+import Link from "next/link";
+import { useState } from "react";
+import {
+  ShoppingCart,
+  User,
+  Search,
+  Menu,
+  X,
+  Heart,
+  LogOut,
+  ShoppingBag,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/auth-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const pathname = usePathname()
-  const { user, logout, isAuthenticated } = useAuth()
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const { user, logout, isAuthenticated } = useAuth();
 
-  const isActive = (path: string) => pathname === path
+  console.log(user);
+  console.log(isAuthenticated);
+
+  const isActive = (path: string) => pathname === path;
 
   const navItems = [
     { name: "Trang chủ", path: "/" },
@@ -30,7 +42,7 @@ export default function Header() {
     { name: "Khuyến mãi", path: "/promotions" },
     { name: "Về chúng tôi", path: "/about" },
     { name: "Liên hệ", path: "/contact" },
-  ]
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -47,7 +59,7 @@ export default function Header() {
                 href={item.path}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-pink-600",
-                  isActive(item.path) ? "text-pink-600" : "text-foreground",
+                  isActive(item.path) ? "text-pink-600" : "text-foreground"
                 )}
               >
                 {item.name}
@@ -66,9 +78,9 @@ export default function Header() {
             <Link href="/account/wishlist">
               <Button variant="ghost" size="icon" className="relative">
                 <Heart className="h-5 w-5" />
-                {user && user.wishlist.length > 0 && (
+                {user && user?.wishlist?.length > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-600 text-[10px] text-white">
-                    {user.wishlist.length}
+                    {user?.wishlist?.length}
                   </span>
                 )}
               </Button>
@@ -89,19 +101,35 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt={user?.fullName || "User"} />
-                    <AvatarFallback>{user?.fullName?.charAt(0) || "U"}</AvatarFallback>
+                    <AvatarImage
+                      src={
+                        user?.avatar_url ||
+                        "/placeholder.svg?height=32&width=32"
+                      }
+                      alt={user?.username || "User"}
+                    />
+                    <AvatarFallback>
+                      {user?.username?.charAt(0) || "U"}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="flex items-center justify-start gap-2 p-2">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src="/placeholder.svg?height=40&width=40" alt={user?.fullName || "User"} />
-                    <AvatarFallback>{user?.fullName?.charAt(0) || "U"}</AvatarFallback>
+                    <AvatarImage
+                      src={
+                        user?.avatar_url ||
+                        "/placeholder.svg?height=40&width=40"
+                      }
+                      alt={user?.username || "User"}
+                    />
+                    <AvatarFallback>
+                      {user?.username?.charAt(0) || "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user?.fullName || "User"}</p>
+                    <p className="font-medium">{user?.username || "User"}</p>
                     <p className="w-[200px] truncate text-sm text-muted-foreground">
                       {user?.email || user?.phone || "user@example.com"}
                     </p>
@@ -109,26 +137,38 @@ export default function Header() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/account" className="cursor-pointer flex items-center">
+                  <Link
+                    href="/account"
+                    className="cursor-pointer flex items-center"
+                  >
                     <User className="mr-2 h-4 w-4" />
                     Tài khoản của tôi
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/account/orders" className="cursor-pointer flex items-center">
+                  <Link
+                    href="/account/orders"
+                    className="cursor-pointer flex items-center"
+                  >
                     <ShoppingBag className="mr-2 h-4 w-4" />
                     Đơn hàng của tôi
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/account/wishlist" className="cursor-pointer flex items-center">
+                  <Link
+                    href="/account/wishlist"
+                    className="cursor-pointer flex items-center"
+                  >
                     <Heart className="mr-2 h-4 w-4" />
                     Sản phẩm yêu thích
                   </Link>
                 </DropdownMenuItem>
                 {user?.role === "Admin" && (
                   <DropdownMenuItem asChild>
-                    <Link href="/admin/dashboard" className="cursor-pointer flex items-center">
+                    <Link
+                      href="/admin/dashboard"
+                      className="cursor-pointer flex items-center"
+                    >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -150,7 +190,10 @@ export default function Header() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer text-red-600 flex items-center">
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="cursor-pointer text-red-600 flex items-center"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   Đăng xuất
                 </DropdownMenuItem>
@@ -164,7 +207,10 @@ export default function Header() {
                 </Button>
               </Link>
               <Link href="/auth/register">
-                <Button size="sm" className="hidden md:flex bg-pink-600 hover:bg-pink-700">
+                <Button
+                  size="sm"
+                  className="hidden md:flex bg-pink-600 hover:bg-pink-700"
+                >
                   Đăng ký
                 </Button>
               </Link>
@@ -177,8 +223,17 @@ export default function Header() {
           )}
         </div>
 
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
@@ -188,7 +243,10 @@ export default function Header() {
           <div className="flex items-center mb-4">
             <div className="relative w-full">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Tìm kiếm sản phẩm..." className="pl-8 w-full" />
+              <Input
+                placeholder="Tìm kiếm sản phẩm..."
+                className="pl-8 w-full"
+              />
             </div>
           </div>
 
@@ -199,7 +257,9 @@ export default function Header() {
                 href={item.path}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-pink-600 p-2",
-                  isActive(item.path) ? "text-pink-600 bg-pink-50" : "text-foreground",
+                  isActive(item.path)
+                    ? "text-pink-600 bg-pink-50"
+                    : "text-foreground"
                 )}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -231,7 +291,9 @@ export default function Header() {
                     </Button>
                   </Link>
                   <Link href="/auth/register" className="flex-1">
-                    <Button className="w-full bg-pink-600 hover:bg-pink-700">Đăng ký</Button>
+                    <Button className="w-full bg-pink-600 hover:bg-pink-700">
+                      Đăng ký
+                    </Button>
                   </Link>
                 </div>
               )}
@@ -242,8 +304,8 @@ export default function Header() {
                 variant="ghost"
                 className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
                 onClick={() => {
-                  logout()
-                  setIsMenuOpen(false)
+                  logout();
+                  setIsMenuOpen(false);
                 }}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -254,5 +316,5 @@ export default function Header() {
         </div>
       )}
     </header>
-  )
+  );
 }
