@@ -28,6 +28,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  setUser: (user: User | null) => void; // Add setUser function
+  setIsAuthenticated: (isAuthenticated: boolean) => void; // Add setIsAuthenticated function
   login: (emailOrPhone: string, password: string) => Promise<boolean>;
   register: (userData: any) => Promise<boolean>;
   logout: () => void;
@@ -40,38 +42,39 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticatedState] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Kiểm tra xem người dùng đã đăng nhập chưa khi tải trang
+  const setUser = (user: User | null) => {
+    setUserState(user);
+  };
+
+  const setIsAuthenticated = (isAuthenticated: boolean) => {
+    setIsAuthenticatedState(isAuthenticated);
+  };
+
+  // Check for token and fetch user info on page load
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      AuthService.getCurrentUser()
+        .then((userInfo) => {
+          setUser(userInfo);
+          setIsAuthenticated(true);
+        })
+        .catch((error) => {
+          console.error("Error fetching user info:", error);
+          localStorage.removeItem("accessToken");
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
     }
-
-    // Khởi tạo users array nếu chưa tồn tại
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    if (users.length === 0) {
-      const defaultAdminUser = {
-        id: 1,
-        fullName: "Admin",
-        email: "admin@thanhtam.com",
-        phone: "0901234567",
-        password: "admin123", // Trong thực tế, mật khẩu nên được mã hóa
-        role: "Admin",
-        createdAt: new Date().toISOString(),
-        orders: [],
-        wishlist: [],
-      };
-      localStorage.setItem("users", JSON.stringify([defaultAdminUser]));
-    }
-
-    setIsLoading(false);
   }, []);
 
   const login = async (
@@ -158,9 +161,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("currentUser");
 
-    // Chuyển hướng về trang chủ
+    // Redirect to home page
     router.push("/");
   };
 
@@ -196,7 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isInWishlist = (productId: number): boolean => {
-    return user ? user.wishlist.includes(productId) : false;
+    return user ? user.wishlist?.includes(productId) : false;
   };
 
   return (
@@ -205,6 +209,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated,
+        setUser, // Provide setUser
+        setIsAuthenticated, // Provide setIsAuthenticated
         login,
         register,
         logout,

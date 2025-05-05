@@ -17,20 +17,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, AlertCircle, Mail, Lock, Phone } from "lucide-react";
-import { useAuth } from "@/components/auth-provider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Eye, EyeOff, AlertCircle, Mail, Lock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import { AuthService } from "@/core/service/api/auth-service"; // Use AuthService for API calls
+import { useAuth } from "@/components/auth-provider"; // Import useAuth
+import { NAVIGATION_PATHS } from "@/core/config/constants"; // Import navigation paths
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { setUser, setIsAuthenticated } = useAuth(); // Use setUser and setIsAuthenticated from useAuth
 
   // Phương thức đăng nhập
   const [method, setMethod] = useState<"email" | "phone" | "otp">("email");
@@ -38,27 +33,19 @@ export default function LoginPage() {
   // Dữ liệu form
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
 
   // Trạng thái UI
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
 
-  // Xử lý đăng nhập bằng email hoặc số điện thoại
+  // Xử lý đăng nhập bằng email
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    const identifier = method === "email" ? email : phone;
-
-    if (!identifier.trim()) {
-      setError(
-        `Vui lòng nhập ${method === "email" ? "email" : "số điện thoại"}`
-      );
+    if (!email.trim()) {
+      setError("Vui lòng nhập email");
       return;
     }
 
@@ -70,76 +57,31 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      // Use AuthService for login
-      const success = await login(identifier, password);
-      if (success) {
-        router.push("/account");
+      // Call AuthService.login directly
+      const { access_token } = await AuthService.login(email, password);
+
+      // Save the token to localStorage
+      localStorage.setItem("accessToken", access_token);
+
+      // Fetch user info using AuthService
+      const userInfo = await AuthService.getCurrentUser();
+
+      // Update user state in useAuth
+      setUser(userInfo);
+      setIsAuthenticated(true);
+
+      // Redirect based on user role
+      if (userInfo.role === "customer") {
+        router.push(NAVIGATION_PATHS.HOME); // Redirect to home for customers
       } else {
-        setError(
-          `${
-            method === "email" ? "Email" : "Số điện thoại"
-          } hoặc mật khẩu không đúng`
-        );
+        router.push(NAVIGATION_PATHS.ACCOUNT); // Redirect to account for other roles
       }
-    } catch (error) {
-      setError("Đã xảy ra lỗi. Vui lòng thử lại sau.");
-      console.error("Login error:", error);
+    } catch (error: any) {
+      // Display error message from AuthService or fallback message
+      setError(error.message || "Đã xảy ra lỗi. Vui lòng thử lại sau.");
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Gửi mã xác thực đến Zalo (giả lập)
-  const sendVerificationCode = () => {
-    if (!phone.trim()) {
-      setError("Vui lòng nhập số điện thoại");
-      return;
-    } else if (!/^[0-9]{10,11}$/.test(phone.replace(/\s/g, ""))) {
-      setError("Số điện thoại không hợp lệ");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError("");
-
-    // Giả lập gửi mã xác thực
-    setTimeout(() => {
-      setIsCodeSent(true);
-      setIsSubmitting(false);
-
-      // Đặt thời gian đếm ngược 60 giây
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }, 1500);
-  };
-
-  // Xác thực mã OTP
-  const verifyCode = () => {
-    if (verificationCode.length !== 6) {
-      setError("Vui lòng nhập đủ 6 số");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError("");
-
-    // Giả lập xác thực mã OTP (mã đúng là "123456")
-    setTimeout(() => {
-      if (verificationCode === "123456") {
-        router.push("/account");
-      } else {
-        setError("Mã xác thực không đúng");
-        setIsSubmitting(false);
-      }
-    }, 1500);
   };
 
   // Đăng nhập bằng Google
@@ -174,238 +116,79 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            <Tabs
-              defaultValue="email"
-              onValueChange={(value) =>
-                setMethod(value as "email" | "phone" | "otp")
-              }
-            >
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="email">Email</TabsTrigger>
-                <TabsTrigger value="phone">Số điện thoại</TabsTrigger>
-                <TabsTrigger value="otp">Mã OTP</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="email" className="space-y-4 pt-4">
-                <form onSubmit={handleLogin}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="example@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Mật khẩu</Label>
-                        <Link
-                          href="/auth/forgot-password"
-                          className="text-sm text-pink-600 hover:underline"
-                        >
-                          Quên mật khẩu?
-                        </Link>
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10 pr-10"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff size={16} />
-                          ) : (
-                            <Eye size={16} />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full bg-pink-600 hover:bg-pink-700"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
-                    </Button>
+            <form onSubmit={handleLogin} className="space-y-4 pt-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="example@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                </form>
-              </TabsContent>
+                </div>
 
-              <TabsContent value="phone" className="space-y-4 pt-4">
-                <form onSubmit={handleLogin}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Số điện thoại</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
-                        <Input
-                          id="phone"
-                          placeholder="0912345678"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password-phone">Mật khẩu</Label>
-                        <Link
-                          href="/auth/forgot-password"
-                          className="text-sm text-pink-600 hover:underline"
-                        >
-                          Quên mật khẩu?
-                        </Link>
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
-                        <Input
-                          id="password-phone"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10 pr-10"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff size={16} />
-                          ) : (
-                            <Eye size={16} />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full bg-pink-600 hover:bg-pink-700"
-                      disabled={isSubmitting}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Mật khẩu</Label>
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-sm text-pink-600 hover:underline"
                     >
-                      {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
-                    </Button>
+                      Quên mật khẩu?
+                    </Link>
                   </div>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="otp" className="space-y-4 pt-4">
-                {!isCodeSent ? (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone-otp">Số điện thoại</Label>
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
-                          <Input
-                            id="phone-otp"
-                            placeholder="0912345678"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
-                        <Button
-                          onClick={sendVerificationCode}
-                          disabled={isSubmitting}
-                          className="bg-pink-600 hover:bg-pink-700"
-                        >
-                          {isSubmitting ? "Đang gửi..." : "Gửi mã"}
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Mã xác thực đã được gửi đến Zalo của số điện thoại
-                      </p>
-                      <p className="font-medium">{phone}</p>
-                    </div>
-
-                    {/* <div className="space-y-2">
-                      <Label htmlFor="otp">Nhập mã xác thực</Label>
-                      <InputOTP
-                        maxLength={6}
-                        value={verificationCode}
-                        onChange={setVerificationCode}
-                      >
-                        <InputOTPGroup>
-                          <InputOTPSlot index={0} />
-                          <InputOTPSlot index={1} />
-                          <InputOTPSlot index={2} />
-                          <InputOTPSlot index={3} />
-                          <InputOTPSlot index={4} />
-                          <InputOTPSlot index={5} />
-                        </InputOTPGroup>
-                      </InputOTP>
-                      <div className="text-center mt-4">
-                        {countdown > 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            Gửi lại mã sau {countdown} giây
-                          </p>
-                        ) : (
-                          <Button
-                            variant="link"
-                            className="text-pink-600 p-0 h-auto"
-                            onClick={sendVerificationCode}
-                            disabled={isSubmitting}
-                          >
-                            Gửi lại mã
-                          </Button>
-                        )}
-                      </div>
-                    </div> */}
-
-                    <Button
-                      onClick={verifyCode}
-                      className="w-full bg-pink-600 hover:bg-pink-700"
-                      disabled={isSubmitting || verificationCode.length !== 6}
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                      onClick={() => setShowPassword(!showPassword)}
                     >
-                      {isSubmitting ? "Đang xác thực..." : "Xác thực"}
-                    </Button>
-                  </>
-                )}
-              </TabsContent>
-            </Tabs>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
 
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
+                <Button
+                  type="submit"
+                  className="w-full bg-pink-600 hover:bg-pink-700"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
+                </Button>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Hoặc
-                </span>
-              </div>
+            </form>
+          </CardContent>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
             </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Hoặc
+              </span>
+            </div>
+          </div>
 
+          <div className="px-2">
             <Button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-2"
+              className="w-full flex items-center justify-center gap-2 "
               variant="outline"
               disabled={isSubmitting}
             >
@@ -433,8 +216,9 @@ export default function LoginPage() {
               </svg>
               {isSubmitting ? "Đang xử lý..." : "Đăng nhập với Google"}
             </Button>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+          </div>
+
+          <CardFooter className="flex flex-col space-y-4 mt-[24px]">
             <div className="text-center text-sm">
               Chưa có tài khoản?{" "}
               <Link

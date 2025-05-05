@@ -2,11 +2,20 @@ import axiosInstance from "@/utils/axios-instance";
 
 export const AuthService = {
   async login(usernameOrEmail: string, password: string) {
-    const response = await axiosInstance.post("/auth/login", {
-      username_or_email: usernameOrEmail,
-      password,
-    });
-    return response.data;
+    try {
+      const response = await axiosInstance.post("/auth/login", {
+        username_or_email: usernameOrEmail,
+        password,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.status === 401) {
+        throw { message: "Tên đăng nhập hoặc mật khẩu không đúng." }; // Throw structured error
+      }
+      throw {
+        message: error.message || "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+      }; // Fallback error
+    }
   },
 
   async register(email: string, password: string, role: string = "customer") {
